@@ -15,6 +15,9 @@ Root:
             Button:
                 text: 'Load'
                 on_release: root.show_load()
+            Button:
+                text: "Add"
+                on_release: root.add()
 
 <LoadDialog>:
     BoxLayout:
@@ -24,6 +27,7 @@ Root:
         FileChooserListView:
             id: filechooser
             path: app.user_data_dir
+            filters: ["*.pdf"]
 
         BoxLayout:
             size_hint_y: None
@@ -35,3 +39,4 @@ Root:
             Button:
                 text: "Load"
                 on_release: root.load(filechooser.path, filechooser.selection)
+

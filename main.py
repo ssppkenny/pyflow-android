@@ -1,4 +1,5 @@
 from kivy.app import App
+from kivymd.app import MDApp
 from kivy.uix.floatlayout import FloatLayout
 from kivy.factory import Factory
 from kivy.properties import ObjectProperty
@@ -10,12 +11,16 @@ from kivy.properties import ListProperty
 import kivy
 import os
 import utils
+import time
 import numpy as np
 from io import BytesIO
 from functools import partial, reduce
 from dataclasses import dataclass
 from collections import defaultdict, Counter
 import intervaltree
+from kivy import platform
+from os import walk
+from urllib.parse import unquote
 
 from kivy.core.window import Window
 from kivy.uix.gridlayout import GridLayout
@@ -23,6 +28,91 @@ import kivy.uix.image
 from PIL import Image, ImageOps, ImageDraw
 from kivy.clock import Clock
 from kivy.core.image import Image as CoreImage
+from kivymd.uix.filemanager.filemanager import MDFileManager
+
+from android.storage import primary_external_storage_path
+from android.storage import secondary_external_storage_path
+from android import activity
+
+if platform == "android":
+    from jnius import cast
+    from jnius import autoclass
+    from android import mActivity, api_version
+
+
+files_path = ""
+
+def permissions_callback(permissions, grant_results):
+    if permissions and all(grant_results):
+        Logger.info("Runtime permissions: granted %s", permissions)
+    else:
+        Logger.error("Runtime permissions: not granted, %s", permissions)
+
+def ask_permission(permissions):
+    request_permissions(permissions, callback=permissions_callback)
+
+if platform == "android":
+    from android.permissions import request_permissions, Permission, check_permission  # pylint: disable=import-error # type: ignore
+    ##ask_permission([Permission.READ_MEDIA_IMAGES, Permission.READ_MEDIA_AUDIO, Permission.READ_MEDIA_VIDEO, Permission.READ_EXTERNAL_STORAGE])
+    ask_permission([Permission.READ_EXTERNAL_STORAGE])
+
+def permissions_external_storage():                  
+    if platform == "android":
+        PythonActivity = autoclass("org.kivy.android.PythonActivity")
+        Environment = autoclass("android.os.Environment")
+        Intent = autoclass("android.content.Intent")
+        Settings = autoclass("android.provider.Settings")
+        Uri = autoclass("android.net.Uri")
+        if api_version > 29:
+            # If you have access to the external storage, do whatever you need
+            if Environment.isExternalStorageManager():
+
+                # If you don't have access, launch a new activity to show the user the system's dialog
+                # to allow access to the external storage
+                pass
+            else:
+                try:
+                    activity = mActivity.getApplicationContext()
+                    uri = Uri.parse("package:" + activity.getPackageName())
+                    intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri)
+                    #intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, uri)
+                    currentActivity = cast(
+                    "android.app.Activity", PythonActivity.mActivity
+                    )
+                    currentActivity.startActivityForResult(intent, 101)
+                except:
+                    intent = Intent()
+                    intent.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                    currentActivity = cast(
+                    "android.app.Activity", PythonActivity.mActivity
+                    )
+                    currentActivity.startActivityForResult(intent, 101)
+
+
+def on_activity_result(request, response, data):
+    global files_path
+    print(files_path)
+    #file_f = data.getStringExtra("path")
+    #print(file_f)
+    PythonActivity = autoclass('org.kivy.android.PythonActivity')
+    p_activity = PythonActivity.mActivity
+    context = cast('android.content.ContextWrapper', p_activity.getApplicationContext())
+    uri = data.getData()
+    uri_path = unquote(uri.toString())
+    pos = uri_path.rfind("/")
+    filename = uri_path[pos+1:]
+    inp_stream = context.getContentResolver().openInputStream(uri)
+    Files = autoclass("java.nio.file.Files")
+    StandardCopyOption = autoclass("java.nio.file.StandardCopyOption")
+
+    File = autoclass("java.io.File")
+    target_file = File(files_path + "/app/" + filename)
+    Files.copy(inp_stream, target_file.toPath(), StandardCopyOption.REPLACE_EXISTING)
+
+
+
+##permissions_external_storage()
+
 
 
 @dataclass
@@ -286,6 +376,16 @@ class LoadDialog(FloatLayout):
     load = ObjectProperty(None)
     cancel = ObjectProperty(None)
 
+    def get_storage_path(self):
+
+        pp = primary_external_storage_path()
+        sp = secondary_external_storage_path()
+        print(pp)
+        print(sp)
+        if pp is None:
+            return sp
+        return pp
+
 
 class Root(FloatLayout):
     loadfile = ObjectProperty(None)
@@ -300,16 +400,49 @@ class Root(FloatLayout):
     def dismiss_popup(self):
         self._popup.dismiss()
 
+    def handle_selection(self, selection):
+        print("SELECTION = ")
+        print(selection)
+        self.load(selection, selection)
+
+
     def show_load(self):
+        #from plyer import filechooser
+        #filechooser.open_file(on_selection = self.handle_selection)
+        #print("PATH:")
+        #print(path)
+        #path = primary_external_storage_path()
+        #self.file_manager = MDFileManager(exit_manager=self.exit_file_manager, select_path=self.select_path)
+        #self.file_manager.show(path)
         content = LoadDialog(load=self.load, cancel=self.dismiss_popup)
         self._popup = Popup(title="Load file", content=content,
                             size_hint=(0.9, 0.9))
         self._popup.open()
 
+    def add(self):
+        global files_path
+        PythonActivity = autoclass('org.kivy.android.PythonActivity')
+        p_activity = PythonActivity.mActivity
+        context = cast('android.content.ContextWrapper', p_activity.getApplicationContext())
+        file_f = cast('java.io.File', context.getFilesDir())
+        print(file_f.getAbsolutePath())
+        files_path = file_f.getAbsolutePath()
+
+        Intent = autoclass("android.content.Intent")
+        aIntent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+        aIntent.putExtra("path", file_f.getAbsolutePath())
+        aIntent.addCategory(Intent.CATEGORY_OPENABLE);
+        aIntent.setType("*/*")
+        activity.bind(on_activity_result=on_activity_result)
+        p_activity.startActivityForResult(aIntent, 42)
+
+
     def load(self, path, filename):
+        print(filename)
         self.filename = filename[0]
         b = utils.get_page(self.pageno, filename[0])
         w, h = utils.get_page_size(self.pageno, filename[0])
+        print(w,h)
         img = Image.frombytes("RGBA", (w, h), b)
         data = BytesIO()
         img.save(data, format='png')
@@ -317,6 +450,7 @@ class Root(FloatLayout):
         im = CoreImage(BytesIO(data.read()), ext='png')
         self.ids.image.texture = im.texture
 
+        #self.exit_file_manager()
         self.dismiss_popup()
 
     def single_tap(self, t):
@@ -370,7 +504,7 @@ class Root(FloatLayout):
             self.ids.image.texture = im.texture
 
 
-class Editor(App):
+class Editor(MDApp):
     pass
 
 Factory.register('Root', cls=Root)

@@ -37,7 +37,7 @@ version = 0.1
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy,numpy,pillow,utils,sortedcontainers,intervaltree
+requirements = python3,android,android.permissions,kivy,kivymd,numpy,pillow,utils,sortedcontainers,intervaltree
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -93,19 +93,20 @@ fullscreen = 0
 #icon.adaptive_background.filename = %(source.dir)s/data/icon_bg.png
 
 # (list) Permissions
-#android.permissions = INTERNET
+#android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE, ACCESS_MEDIA_LOCATION
+android.permissions = READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE, MANAGE_EXTERNAL_STORAGE
 
 # (list) features (adds uses-feature -tags to manifest)
 #android.features = android.hardware.usb.host
 
 # (int) Target Android API, should be as high as possible.
-#android.api = 27
+android.api = 31
 
 # (int) Minimum API your APK / AAB will support.
-#android.minapi = 21
+android.minapi = 21
 
 # (int) Android SDK version to use
-#android.sdk = 20
+android.sdk = 28
 
 # (str) Android NDK version to use
 #android.ndk = 23b
@@ -187,7 +188,7 @@ fullscreen = 0
 #android.add_assets =
 
 # (list) Gradle dependencies to add
-#android.gradle_dependencies =
+android.gradle_dependencies = androidx.appcompat:appcompat:1.1.0
 
 # (bool) Enable AndroidX support. Enable when 'android.gradle_dependencies'
 # contains an 'androidx' package, or any package from Kotlin source.
@@ -228,8 +229,9 @@ fullscreen = 0
 #android.manifest.launch_mode = standard
 
 # (list) Android additional libraries to copy into libs/armeabi
-android.add_libs_armeabi_v7a = /Users/sergey/code/python/andr/libs/armeabi-v7a/*.so
-android.add_libs_x86_64 = /Users/sergey/code/python/andr/libs/x86_64/*.so
+#android.add_libs_armeabi_v7a = /Users/sergey/code/python/andr/libs/armeabi-v7a/*.so
+#android.add_libs_x86_64 = /Users/sergey/code/python/andr/libs/x86_64/*.so
+android.add_libs_arm64_v8a = /Users/sergey/code/python/andr/libs/arm64-v8a/*.so
 #android.add_libs_armeabi = libs/android/*.so
 #android.add_libs_armeabi_v7a = libs/android-v7/*.so
 #android.add_libs_arm64_v8a = libs/android-v8/*.so
@@ -264,7 +266,7 @@ android.add_libs_x86_64 = /Users/sergey/code/python/andr/libs/x86_64/*.so
 
 # (list) The Android archs to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
 # In past, was `android.arch` as we weren't supporting builds for multiple archs at the same time.
-android.archs = x86_64, armeabi-v7a
+android.archs = arm64-v8a
 #android.archs = arm64-v8a, armeabi-v7a
 
 # (int) overrides automatic versionCode computation (used in build.gradle)

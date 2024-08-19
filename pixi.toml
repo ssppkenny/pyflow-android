@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Add a short description here"
 authors = ["Sergey Mikhno <sergey.mikhno@gmail.com>"]
 channels = ["conda-forge"]
-platforms = ["osx-64"]
+platforms = ["osx-arm64", "osx-64"]
 
 [tasks]
 
@@ -12,6 +12,7 @@ platforms = ["osx-64"]
 numpy = "1.24.4.*"
 cython = ">=3.0.10,<3.1"
 pip = ">=24.0,<25"
+python = "3.11.*"
 
 
 [pypi-dependencies]
