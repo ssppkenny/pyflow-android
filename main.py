@@ -343,7 +343,7 @@ def prepare_flow(img):
 def reflow(img, indent_width, flow_items, w, indents, mean_h):
     new_w = int(0.8 * w)
     state = [indent_width, defaultdict(list), 0, 0, flow_items, dict()]
-    reduce(flow_step(new_w, indent_width, indents, state), flow_items)
+    reduce(flow_step(new_w, indent_width, indents, state), flow_items, None)
     new_h = int((state[2] * 3 + 15) * mean_h)
     line_count = state[2]
     reflowed_lines = state[1]
