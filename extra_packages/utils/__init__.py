@@ -16,8 +16,8 @@ from pythonforandroid.logger import (
 
 
 class UtilsRecipe(CythonRecipe):
-    version = '0.1.2'
-    url = 'https://github.com/ssppkenny/myutils/archive/refs/tags/0.1.2.zip'
+    version = '0.1.7'
+    url = 'https://github.com/ssppkenny/myutils/archive/refs/tags/0.1.7.zip'
     site_packages_name = 'utils'
     depends = ['setuptools', 'cython']
     install_in_hostpython = False
