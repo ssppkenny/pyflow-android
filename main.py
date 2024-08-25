@@ -39,8 +39,25 @@ if platform == "android":
     from jnius import autoclass
     from android import mActivity, api_version
 
+print(dir(utils))
 
 files_path = ""
+
+def get_display_metrics():
+    PythonActivity = autoclass("org.kivy.android.PythonActivity")
+    activity = PythonActivity.mActivity
+    displayMetrics = activity.getContext().getResources().getDisplayMetrics()
+    print(displayMetrics.widthPixels)
+    print(displayMetrics.heightPixels)
+    print(displayMetrics.widthPixels / displayMetrics.density)
+    print(displayMetrics.heightPixels / displayMetrics.density)
+
+def get_display_width():
+    PythonActivity = autoclass("org.kivy.android.PythonActivity")
+    activity = PythonActivity.mActivity
+    displayMetrics = activity.getContext().getResources().getDisplayMetrics()
+    return displayMetrics.widthPixels
+
 
 def permissions_callback(permissions, grant_results):
     if permissions and all(grant_results):
@@ -440,8 +457,9 @@ class Root(FloatLayout):
     def load(self, path, filename):
         print(filename)
         self.filename = filename[0]
-        b = utils.get_page(self.pageno, filename[0])
-        w, h = utils.get_page_size(self.pageno, filename[0])
+        page_width = get_display_width()
+        b = utils.get_page_for_display(self.pageno, filename[0], page_width)
+        w, h = utils.get_page_size_for_display(self.pageno, filename[0], page_width)
         print(w,h)
         img = Image.frombytes("RGBA", (w, h), b)
         data = BytesIO()
@@ -484,8 +502,9 @@ class Root(FloatLayout):
                 partial(self.single_tap), double_tap_wait_s)
 
     def update(self):
-        b = utils.get_page(self.pageno, self.filename)
-        w, h = utils.get_page_size(self.pageno, self.filename)
+        page_width = get_display_width()
+        b = utils.get_page_for_display(self.pageno, self.filename, page_width)
+        w, h = utils.get_page_size_for_display(self.pageno, self.filename, page_width)
         img = Image.frombytes("RGBA", (w, h), b)
         if self.reflowed:
             indent_width, flow_items, w, indents, mean_h = prepare_flow(img)
