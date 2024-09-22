@@ -13,7 +13,7 @@ package.domain = org.mydomain
 source.dir = .
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = py,png,jpg,kv,atlas,pdf
+source.include_exts = py,png,jpg,kv,atlas,pdf,djvu,ini
 
 # (list) List of inclusions using pattern matching
 #source.include_patterns = assets/*,images/*.png
@@ -37,7 +37,7 @@ version = 0.1
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,android,android.permissions,kivy,kivymd,numpy,pillow,utils,sortedcontainers,intervaltree
+requirements = python3,android,android.permissions,kivy,kivymd,numpy,pillow,utils,sortedcontainers,intervaltree,mydjvulib,opencv
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -109,7 +109,7 @@ android.minapi = 21
 android.sdk = 28
 
 # (str) Android NDK version to use
-#android.ndk = 23b
+android.ndk = 25c
 
 # (int) Android NDK API to use. This is the minimum API your app will support, it should usually match android.minapi.
 #android.ndk_api = 21
