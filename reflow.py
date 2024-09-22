@@ -231,7 +231,8 @@ def prepare_flow(img):
     return int(5*mean_w), flow_items, w, indents, mean_h
 
 
-def reflow(img, indent_width, flow_items, w, indents, mean_h):
+def reflow(img):
+    indent_width, flow_items, w, indents, mean_h = prepare_flow(img)
     new_w = int(0.8 * w)
     state = [indent_width, defaultdict(list), 0, 0, flow_items, dict()]
     reduce(flow_step(new_w, indent_width, indents, state), flow_items, None)

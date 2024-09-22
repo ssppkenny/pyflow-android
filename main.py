@@ -159,13 +159,6 @@ class Root(FloatLayout):
 
 
     def show_load(self):
-        #from plyer import filechooser
-        #filechooser.open_file(on_selection = self.handle_selection)
-        #print("PATH:")
-        #print(path)
-        #path = primary_external_storage_path()
-        #self.file_manager = MDFileManager(exit_manager=self.exit_file_manager, select_path=self.select_path)
-        #self.file_manager.show(path)
         content = LoadDialog(load=self.load, cancel=self.dismiss_popup)
         self._popup = Popup(title="Load file", content=content,
                             size_hint=(0.9, 0.9))
@@ -188,22 +181,19 @@ class Root(FloatLayout):
         activity.bind(on_activity_result=on_activity_result)
         p_activity.startActivityForResult(aIntent, 42)
 
-
     def load(self, path, filename):
-        print(filename)
+        print(f"path = {path}")
         self.filename = filename[0]
         page_width = 1.2 * get_display_width()
         if filename[0].endswith(".djvu"):
-            img = self.load_djvu(self.pageno, filename[0])
+            img = self.load_djvu(self.pageno, self.filename)
         else:
-            img = self.load_pdf(self.pageno, filename[0], page_width)
+            img = self.load_pdf(self.pageno, self.filename, page_width)
         data = BytesIO()
         img.save(data, format='png')
         data.seek(0)
         im = CoreImage(BytesIO(data.read()), ext='png')
         self.ids.image.texture = im.texture
-
-        #self.exit_file_manager()
         self.dismiss_popup()
 
     def single_tap(self, t):
@@ -258,33 +248,27 @@ class Root(FloatLayout):
                 self.reflowed = not self.reflowed
                 self.update(False)
 
-
-
     def load_djvu(self, pageno, filepath):
         arr = mydjvulib.get_image_as_arrray(pageno, filepath)
-        _, img_bw = cv2.threshold(arr, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
-        return Image.fromarray(img_bw, "L")
-
+        _, bw = cv2.threshold(arr, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        return Image.fromarray(bw, "L")
 
     def load_pdf(self, pageno, filepath, page_width):
         b = utils.get_page_for_display(pageno, filepath, page_width)
         w, h = utils.get_page_size_for_display(pageno, filepath, page_width)
         return Image.frombytes("RGBA", (w, h), b)
 
-
     def update(self, load_new_page):
         if self.filename is None:
             return
         page_width = 1.2 * get_display_width()
-        if load_new_page: 
+        if load_new_page:
             if self.filename.endswith(".djvu"):
                 self.img = self.load_djvu(self.pageno, self.filename)
             else:
                 self.img = self.load_pdf(self.pageno, self.filename, page_width)
         if self.reflowed:
-            indent_width, flow_items, w, indents, mean_h = reflow.prepare_flow(self.img)
-            new_image = reflow.reflow(self.img, indent_width, flow_items, w,
-                               indents, mean_h)
+            new_image = reflow.reflow(self.img)
             data = BytesIO()
             new_image.save(data, format='png')
             data.seek(0)
@@ -300,6 +284,7 @@ class Root(FloatLayout):
 
 class Editor(MDApp):
     pass
+
 
 Factory.register('Root', cls=Root)
 Factory.register('LoadDialog', cls=LoadDialog)
