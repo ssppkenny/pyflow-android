@@ -17,3 +17,17 @@
 15. copy packages from extra_packages into .buildozer/android/platform/python-for-android/pythonforandroid/recipes
 16.  buildozer android debug deploy run
 
+
+Build project with docker
+1. docker build --platform linux/amd64  -t myappimage .
+2. docker run -it --platform linux/amd64 myappimage  /bin/bash
+3. cd pyflow-android
+4. pixi install
+5. pixi shell
+6. buildozer android debug
+7. Ctrl-C after the android sdk is downloaded
+8. copy packages from extra_packages into .buildozer/android/platform/python-for-android/pythonforandroid/recipes
+9. wait until build is completed
+10. copy libriries from libs into .buildozer/android/platform/build-arm64-v8a/dists/myapp/libs/arm64-v8a
+
+
