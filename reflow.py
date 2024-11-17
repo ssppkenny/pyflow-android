@@ -5,6 +5,9 @@ import numpy as np
 import utils
 from functools import reduce
 from dataclasses import dataclass
+import cv2
+import rlsa_fast
+
 
 @dataclass
 class FlowItem:
@@ -14,6 +17,18 @@ class FlowItem:
     height: int
     baseline: int
     linenumber: int
+
+
+def find_rects(img):
+    numLabels, labels, stats, centroids = cv2.connectedComponentsWithStats(img, 8, cv2.CV_32S)
+    rects = []
+    for i in range(1, numLabels):
+        x = stats[i, cv2.CC_STAT_LEFT]
+        y = stats[i, cv2.CC_STAT_TOP]
+        w = stats[i, cv2.CC_STAT_WIDTH]
+        h = stats[i, cv2.CC_STAT_HEIGHT]
+        rects.append((x, x+w, y, y+h))
+    return rects
 
 
 def get_baselines(new_lines):
@@ -90,30 +105,62 @@ def flow_step(new_w, indent_width, indents, state):
     return inner_flow_step
 
 
-def prepare_flow(img):
-    img_gray = img.convert("L")
-    threshold = 100
-    img_b = img_gray.point(lambda p: 255 if p > threshold else 0)
-    img_i = ImageOps.invert(img_b)
-    structure = np.ones((3, 3), dtype=np.int8)
-    # label separate components
-    labeled, _ = utils.label(img_i, structure)
-    ll = defaultdict(list)
-    nz = np.nonzero(labeled)
-    ln = len(nz[0])
+def remove_defects(img_gray):
+    _, img_i = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
 
-    for i in range(ln):
-        a = nz[0][i]
-        b = nz[1][i]
-        ll[labeled[a][b]].append([a, b])
-    rects = []
-    for k in ll:
-        c = np.array(ll[k])
-        ymin = np.min(c[:, 0])
-        ymax = np.max(c[:, 0])
-        xmin = np.min(c[:, 1])
-        xmax = np.max(c[:, 1])
-        rects.append((xmin, xmax, ymin, ymax))
+    rects = find_rects(img_i)
+    h = np.median([r[3]-r[2] for r in rects])
+
+    img_b = cv2.bitwise_not(img_i)
+    H_V = rlsa_fast.rlsa_fast(img_b, True, True, int(4*h))
+
+    H_V = np.int8(cv2.bitwise_not(H_V))
+
+    numLabels, _, stats, _ = cv2.connectedComponentsWithStats(H_V, 8, cv2.CV_32S)
+    big_rects = []
+    for i in range(1, numLabels):
+        x = stats[i, cv2.CC_STAT_LEFT]
+        y = stats[i, cv2.CC_STAT_TOP]
+        w = stats[i, cv2.CC_STAT_WIDTH]
+        h = stats[i, cv2.CC_STAT_HEIGHT]
+        big_rects.append((x, x+w, y, y+h))
+
+    to_remove = [br for br in big_rects if  (br[1]-br[0]) / (br[3] - br[2])  > 4 or (br[3]-br[2]) / (br[1] - br[0])  > 4 ]
+
+    for xmin, xmax, ymin, ymax in to_remove:
+        img_gray[ymin:ymax, xmin:xmax] = 255
+
+    print(to_remove)
+    return img_gray
+
+
+def rotate(pg):
+    # get threshold with positive pixels as text
+    imOTSU = cv2.threshold(pg, 0, 1, cv2.THRESH_OTSU+cv2.THRESH_BINARY_INV)[1]
+    # get coordinates of positive pixels (text)
+    coords = np.column_stack(np.where(imOTSU > 0))
+    # get a minAreaRect angle
+    angle = cv2.minAreaRect(coords)[-1]
+    # adjust angle
+    if angle < -45:
+        angle = -(90 + angle)
+    else:
+        angle = -angle
+    # get width and center for RotationMatrix2D
+    (h, w) = pg.shape
+    center = (w // 2, h // 2)
+    M = cv2.getRotationMatrix2D(center, angle, 1.0)
+    rotated = cv2.warpAffine(pg, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+    return rotated
+
+def prepare_flow(img):
+    img_gray = np.asarray(img.convert("L"))
+    # remove scan defects 
+    img_gray = remove_defects(img_gray)
+    ## img_gray = rotate(img_gray)
+    # label separate components
+    _, img_i = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+    rects = find_rects(np.asarray(img_i))
 
     w, h = img.size
     d = defaultdict(list)
@@ -188,8 +235,7 @@ def prepare_flow(img):
     v_limits = []
     for i, lim in enumerate(new_limits):
         ymin, ymax = new_limits[i]
-        line_b = img_i.crop((0, ymin, w, ymax))
-        np_line = np.array(line_b)
+        np_line = img_i[ymin:ymax, 0:w]
         rv, rs, rl = find_runs(np.sum(np_line, axis=0))
         zero_inds = np.where(rv == 0)[0]
         A = rs[zero_inds]
@@ -227,12 +273,12 @@ def prepare_flow(img):
             indents[i] = 1
         else:
             indents[i] = 0
-
-    return int(5*mean_w), flow_items, w, indents, mean_h
+    img_gray = Image.fromarray(np.uint8(img_gray))
+    return img_gray, int(5*mean_w), flow_items, w, indents, mean_h
 
 
 def reflow(img):
-    indent_width, flow_items, w, indents, mean_h = prepare_flow(img)
+    img, indent_width, flow_items, w, indents, mean_h = prepare_flow(img)
     new_w = int(0.8 * w)
     state = [indent_width, defaultdict(list), 0, 0, flow_items, dict()]
     reduce(flow_step(new_w, indent_width, indents, state), flow_items, None)

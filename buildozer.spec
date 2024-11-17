@@ -37,7 +37,7 @@ version = 0.1
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,android,android.permissions,kivy,kivymd,numpy,pillow,utils,sortedcontainers,intervaltree,mydjvulib,opencv
+requirements = python3,android,android.permissions,kivy,kivymd,numpy,pillow,utils,sortedcontainers,intervaltree,mydjvulib,opencv,rlsa_fast
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -231,7 +231,7 @@ android.gradle_dependencies = androidx.appcompat:appcompat:1.1.0
 # (list) Android additional libraries to copy into libs/armeabi
 #android.add_libs_armeabi_v7a = /Users/sergey/code/python/andr/libs/armeabi-v7a/*.so
 #android.add_libs_x86_64 = /Users/sergey/code/python/andr/libs/x86_64/*.so
-android.add_libs_arm64_v8a = /Users/sergey/code/python/andr/libs/arm64-v8a/*.so
+android.add_libs_arm64_v8a = /Users/sergey/code/python/pyflow-android/libs/arm64-v8a/*.so
 #android.add_libs_armeabi = libs/android/*.so
 #android.add_libs_armeabi_v7a = libs/android-v7/*.so
 #android.add_libs_arm64_v8a = libs/android-v8/*.so

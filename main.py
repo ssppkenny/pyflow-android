@@ -5,6 +5,7 @@ from kivy.properties import ObjectProperty
 from kivy.uix.popup import Popup
 from kivy.logger import Logger
 from kivy.properties import ListProperty
+import rlsa_fast
 
 import kivy
 import utils
@@ -27,6 +28,8 @@ from android import activity
 import mydjvulib
 import cv2
 import reflow
+
+print(dir(rlsa_fast))
 
 if platform == "android":
     from jnius import cast
@@ -174,10 +177,13 @@ class Root(FloatLayout):
         files_path = file_f.getAbsolutePath()
 
         Intent = autoclass("android.content.Intent")
-        aIntent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+        aIntent = Intent(Intent.ACTION_PICK)
+        aIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        Uri = autoclass('android.net.Uri')
+        ##aIntent.setDataAndType(Uri.fromFile(file_f), "*/*")
         aIntent.putExtra("path", file_f.getAbsolutePath())
-        aIntent.addCategory(Intent.CATEGORY_OPENABLE)
-        aIntent.setType("*")
+        ##aIntent.addCategory(Intent.CATEGORY_OPENABLE)
+        ##aIntent.setType("*")
         activity.bind(on_activity_result=on_activity_result)
         p_activity.startActivityForResult(aIntent, 42)
 
