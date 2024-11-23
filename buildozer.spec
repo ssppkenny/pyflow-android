@@ -231,7 +231,7 @@ android.gradle_dependencies = androidx.appcompat:appcompat:1.1.0
 # (list) Android additional libraries to copy into libs/armeabi
 #android.add_libs_armeabi_v7a = /Users/sergey/code/python/andr/libs/armeabi-v7a/*.so
 #android.add_libs_x86_64 = /Users/sergey/code/python/andr/libs/x86_64/*.so
-android.add_libs_arm64_v8a = /Users/sergey/code/python/pyflow-android/libs/arm64-v8a/*.so
+android.add_libs_arm64_v8a = libs/arm64-v8a/*.so
 #android.add_libs_armeabi = libs/android/*.so
 #android.add_libs_armeabi_v7a = libs/android-v7/*.so
 #android.add_libs_arm64_v8a = libs/android-v8/*.so
@@ -299,7 +299,7 @@ android.allow_backup = True
 #
 
 # (str) python-for-android URL to use for checkout
-#p4a.url =
+p4a.url = https://github.com/ssppkenny/python-for-android
 
 # (str) python-for-android fork to use in case if p4a.url is not specified, defaults to upstream (kivy)
 #p4a.fork = kivy
