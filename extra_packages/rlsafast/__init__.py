@@ -6,11 +6,11 @@ class RlsaFastRecipe(CompiledComponentsPythonRecipe):
       - build labraru `libprotobuf.so`
       - build and install python binding for protobuf_cpp
     """
-    name = 'rlsa_fast'
+    name = 'rlsafast'
     version = '0.0.2'
     url = 'https://github.com/ssppkenny/pythonRLSA/archive/refs/tags/{version}.zip'
     call_hostpython_via_targetpython = False
     depends = ['numpy', 'setuptools']
-    site_packages_name = 'rlsa_fast'
+    site_packages_name = 'rlsafast'
 
 recipe = RlsaFastRecipe()

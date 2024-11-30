@@ -1,11 +1,11 @@
-from kivymd.app import MDApp
+from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
 from kivy.factory import Factory
 from kivy.properties import ObjectProperty
 from kivy.uix.popup import Popup
 from kivy.logger import Logger
 from kivy.properties import ListProperty
-import rlsa_fast
+# import rlsafast
 
 import kivy
 import utils
@@ -19,7 +19,6 @@ import kivy.uix.image
 from PIL import Image, ImageOps
 from kivy.clock import Clock
 from kivy.core.image import Image as CoreImage
-from kivymd.uix.filemanager.filemanager import MDFileManager
 
 from android.storage import primary_external_storage_path
 from android.storage import secondary_external_storage_path
@@ -29,7 +28,6 @@ import mydjvulib
 import cv2
 import reflow
 
-print(dir(rlsa_fast))
 
 if platform == "android":
     from jnius import cast
@@ -288,7 +286,7 @@ class Root(FloatLayout):
             self.ids.image.texture = im.texture
 
 
-class Editor(MDApp):
+class Editor(App):
     pass
 
 
