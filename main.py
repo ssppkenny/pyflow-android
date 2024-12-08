@@ -1,11 +1,14 @@
+from numpy import insert
 from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
 from kivy.factory import Factory
 from kivy.properties import ObjectProperty
 from kivy.uix.popup import Popup
 from kivy.logger import Logger
-from kivy.properties import ListProperty
+from kivy.properties import ListProperty, NumericProperty
 # import rlsafast
+from kivy.uix.behaviors import ButtonBehavior
+from kivymd.uix.behaviors import TouchBehavior 
 
 import kivy
 import utils
@@ -133,14 +136,12 @@ class LoadDialog(FloatLayout):
 
         pp = primary_external_storage_path()
         sp = secondary_external_storage_path()
-        print(pp)
-        print(sp)
         if pp is None:
             return sp
         return pp
 
 
-class Root(FloatLayout):
+class Root(FloatLayout, TouchBehavior):
     loadfile = ObjectProperty(None)
     text_input = ObjectProperty(None)
     image = ObjectProperty(None)
@@ -148,7 +149,9 @@ class Root(FloatLayout):
     scheduled_event = None
     filename = None
     reflowed = False
-
+    count = 0
+    # duration_long_touch = NumericProperty(1.0)
+    locked = False
 
     def dismiss_popup(self):
         self._popup.dismiss()
@@ -157,7 +160,6 @@ class Root(FloatLayout):
         print("SELECTION = ")
         print(selection)
         self.load(selection, selection)
-
 
     def show_load(self):
         content = LoadDialog(load=self.load, cancel=self.dismiss_popup)
@@ -178,15 +180,12 @@ class Root(FloatLayout):
         aIntent = Intent(Intent.ACTION_PICK)
         aIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         Uri = autoclass('android.net.Uri')
-        ##aIntent.setDataAndType(Uri.fromFile(file_f), "*/*")
         aIntent.putExtra("path", file_f.getAbsolutePath())
-        ##aIntent.addCategory(Intent.CATEGORY_OPENABLE)
-        ##aIntent.setType("*")
         activity.bind(on_activity_result=on_activity_result)
         p_activity.startActivityForResult(aIntent, 42)
 
     def load(self, path, filename):
-        print(f"path = {path}")
+        self.pageno = 0
         self.filename = filename[0]
         page_width = 1.2 * get_display_width()
         if filename[0].endswith(".djvu"):
@@ -200,57 +199,38 @@ class Root(FloatLayout):
         self.ids.image.texture = im.texture
         self.dismiss_popup()
 
-    def single_tap(self, t):
-        print(t)
-        w, _ = Window.size
-        x, _ = self.touch.pos
-        print("single tap")
-        print(f"x = {x}, w = {w}")
-        if x < (w / 2):
-            self.pageno -= (1 if self.pageno > 0 else 0)
-        else:
-            self.pageno += 1
-        self.update(True)
-
-    def double_tap(self, touch):
-        print(touch)
-        self.reflowed = not self.reflowed
-        try:
-            self.update(False)
-        except Exception as e:
-            print(e)
-
-    def touch_down(self, touch):
-        if self.filename is None:
+    def on_long_touch(self, touch, *args):
+        if touch.is_double_tap:
             return
-        self.mouse_x, _ = touch.pos
-        touch.grab(self)
-        # if self.scheduled_event is not None:
-        #     self.scheduled_event.cancel()
-        #     self.scheduled_event = None
-        # if touch.is_double_tap:
-        #     print("is double tap")
-        #     self.double_tap(touch)
-        # else:
-        #     double_tap_wait_s = 0.5
+        print("long touch")
+        if not self.locked:
+            self.locked = True
+            self.reflowed = not self.reflowed
+            try:
+                self.update(False)
+            except Exception as e:
+                print(e)
+        self.locked = False
 
-    def touch_move(self, touch):
-        pass
+    def on_double_tap(self, touch):
+        print("double tap")
+        super(Root, self).on_double_tap(touch)
+        if not self.locked:
+            self.locked = True
+            width, height = Window.size
+            if self.filename is None:
+                return
+            self.mouse_x, _ = touch.pos
+            # self.mouse_x, _ = touch.pos
+            x, _ = touch.pos
 
-    def touch_up(self, touch):
-        if touch.grab_current is self:
-            x1 = self.mouse_x
-            x2, _ = touch.pos
-
-            if x1 < x2 and x2 - x1 > 50:
+            if x > width / 2:
                 self.pageno += 1
                 self.update(True)
-            elif x2 < x1 and x1 - x2 > 50:
+            else:
                 self.pageno -= (1 if self.pageno > 0 else 0)
                 self.update(True)
-            else:
-                self.reflowed = not self.reflowed
-                self.update(False)
+        self.locked = False
 
     def load_djvu(self, pageno, filepath):
         arr = mydjvulib.get_image_as_arrray(pageno, filepath)

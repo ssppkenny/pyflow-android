@@ -1,3 +1,4 @@
+from sys import thread_info
 from PIL import Image, ImageOps
 from collections import defaultdict, Counter
 import intervaltree
@@ -6,7 +7,9 @@ import utils
 from functools import reduce
 from dataclasses import dataclass
 import cv2
-import rlsa_fast
+# import rlsafast
+##from rlsa_python.rlsa import RLSA
+from rlsamod import rlsa
 
 
 @dataclass
@@ -112,7 +115,9 @@ def remove_defects(img_gray):
     h = np.median([r[3]-r[2] for r in rects])
 
     img_b = cv2.bitwise_not(img_i)
-    H_V = rlsa_fast.rlsa_fast(img_b, True, True, int(4*h))
+    img_b = np.int32(img_b)
+    print(f"starting rlsa, median = {h}")
+    H_V = rlsa(img_b, int(4*h))
 
     H_V = np.int8(cv2.bitwise_not(H_V))
 
