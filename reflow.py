@@ -9,7 +9,8 @@ from dataclasses import dataclass
 import cv2
 # import rlsafast
 ##from rlsa_python.rlsa import RLSA
-from rlsamod import rlsa
+# from rlsamod import rlsa
+from rlsa import rlsa
 
 
 @dataclass
@@ -116,8 +117,8 @@ def remove_defects(img_gray):
 
     img_b = cv2.bitwise_not(img_i)
     img_b = np.int32(img_b)
-    print(f"starting rlsa, median = {h}")
-    H_V = rlsa(img_b, int(4*h))
+    # H_V = rlsa(img_b, int(4*h))
+    H_V = rlsa(img_b, True, True, int(4*h))
 
     H_V = np.int8(cv2.bitwise_not(H_V))
 

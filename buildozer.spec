@@ -37,7 +37,7 @@ version = 0.1
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,android,android.permissions,kivy,kivymd,numpy,pillow,utils,sortedcontainers,intervaltree,mydjvulib,opencv,rlsamod
+requirements = python3,android,android.permissions,kivy,kivymd,numpy,pillow,utils,sortedcontainers,intervaltree,mydjvulib,rlsa,opencv,rlsamod
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
